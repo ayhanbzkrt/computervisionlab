@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>🤖 AI'Han Academy - Computer Vision Lab (Optimized)</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- TensorFlow.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.0.0/tf.min.js"></script>
+    <!-- TensorFlow Pose Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0/dist/pose-detection.min.js"></script>
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <!-- MediaPipe Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <!-- MediaPipe Face Mesh -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <!-- Face API for Real-Time Emotion Analysis -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <!-- Chart.js for Real-Time Emotion Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas-Confetti for Celebration Effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <!-- TF COCO-SSD for Object Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+      :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --dark-bg: #1e272e;
+        --light-bg: #f5f5f5;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'IBM Plex Sans', Arial, sans-serif;
+        background: linear-gradient(135deg, var(--light-bg) 0%, #e0e0e0 100%);
+        color: var(--dark-bg);
+        line-height: 1.6;
+      }
+      .lang-toggle {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+      }
+      .lang-toggle button {
+        background-color: var(--secondary-color);
+        border: none;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin-right: 5px;
+        color: white;
+        cursor: pointer;
+      }
+      .header {
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        color: white;
+        text-align: center;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: relative;
+      }
+      .header h1 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .header h1 i {
+        font-size: 1.8em;
+      }
+      .speech-bubble {
+        display: inline-block;
+        background: #ffdd57;
+        color: #333;
+        padding: 5px 10px;
+        border-radius: 10px;
+        position: relative;
+        animation: bubbleMove 2s infinite ease-in-out;
+      }
+      @keyframes bubbleMove {
+        0% {
+          transform: translateY(0);
+          background-color: #ffdd57;
+        }
+        50% {
+          transform: translateY(-5px);
+          background-color: #ffe680;
+        }
+        100% {
+          transform: translateY(0);
+          background-color: #ffdd57;
+        }
+      }
+      .card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        background: white;
+        margin-bottom: 20px;
+      }
+      .card:hover {
+        transform: scale(1.02);
+      }
+      .card-header {
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        color: white;
+        font-size: 1.25rem;
+      }
+      canvas, video {
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      .controls .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .btn-start {
+        background-color: var(--primary-color);
+        color: white;
+      }
+      .btn-stop {
+        background-color: #e74c3c;
+        color: white;
+      }
+      .share-btn {
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 0.9em;
+        color: #7f8c8d;
+      }
+      .footer {
+        background: var(--dark-bg);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        margin-top: 20px;
+      }
+      .footer a {
+        color: var(--secondary-color);
+        margin: 0 10px;
+        text-decoration: none;
+      }
+      .spinner {
+        border: 4px solid rgba(0,0,0,0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: var(--primary-color);
+        animation: spin 1s ease infinite;
+        margin: auto;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .task-message {
+        font-weight: bold;
+        color: var(--primary-color);
+        text-align: center;
+        margin-top: 5px;
+      }
+      .info-panel {
+        background: #ffffff;
+        border: 2px solid var(--primary-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      .info-panel h2 {
+        color: var(--primary-color);
+      }
+      .faq-panel {
+        background: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+      }
+      .faq-panel h3 {
+        color: var(--primary-color);
+      }
+      .edu-module pre {
+        background: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .edu-module .output-box {
+        background: #eaeaea;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Language Toggle Buttons (EN / TR) -->
+    <div class="lang-toggle">
+      <button id="btnEN">EN</button>
+      <button id="btnTR">TR</button>
+    </div>
+
+    <header class="header">
+      <h1>
+        <i class="fas fa-robot"></i>
+        <span class="speech-bubble" data-translate="greeting">Hello, I'm AI'Han!</span>
+        <span data-translate="portalTitle">AI'Han Academy - Computer Vision Lab</span>
+      </h1>
+    </header>
+
+    <!-- Top Info Section -->
+    <div class="container my-4">
+      <div class="info-panel" data-translate="platformInfo">
+        <h2 data-translate="howItWorksTitle">How Our Platform Works</h2>
+        <!-- Extended descriptive text for the platform -->
+        <p data-translate="platformDesc">
+          Our lab leverages cutting-edge AI and machine learning technologies to integrate state-of-the-art modules including Body Pose Analysis, Hand Gesture Detection, Emotion Analysis, Face Recognition & Speech Estimation, Object Detection, Motion Detection, Fun Icon Overlay, and Emoji Party. Each module is built upon advanced algorithms that push the boundaries of computer vision.
+        </p>
+        <p data-translate="bodyPoseInfo"><strong>Body Pose Analysis:</strong> Powered by TensorFlow.js and MoveNet, this module detects and tracks body keypoints in real time.</p>
+        <p data-translate="handGestureInfo"><strong>Hand Gesture Detection:</strong> Utilizing MediaPipe Hands to accurately interpret your hand movements.</p>
+        <p data-translate="emotionInfo"><strong>Emotion Analysis:</strong> With face-api.js, it analyzes facial expressions to determine your mood.</p>
+        <p data-translate="faceRecogInfo"><strong>Face Recognition & Speech Estimation:</strong> This module uses MediaPipe Face Mesh to capture 468 facial landmarks and simulate speech estimation.</p>
+        <p data-translate="platformConclusion">
+          Explore our platform to experience the transformative power of computer vision in real time.
+        </p>
+      </div>
+
+      <!-- Accordion: Additional Info -->
+      <div class="accordion" id="cvAccordion">
+        <!-- What is Computer Vision? -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingOne">
+            <button
+              class="accordion-button"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseOne"
+              aria-expanded="true"
+              aria-controls="collapseOne"
+              data-translate="cvWhatTitle"
+            >
+              What is Computer Vision?
+            </button>
+          </h2>
+          <div
+            id="collapseOne"
+            class="accordion-collapse collapse show"
+            aria-labelledby="headingOne"
+            data-bs-parent="#cvAccordion"
+          >
+            <div class="accordion-body" data-translate="cvWhatContent">
+              <p>
+                Computer Vision is a branch of artificial intelligence that enables computers to interpret and understand digital images and videos. It combines techniques from image processing, machine learning, and deep learning to identify objects, classify scenes, and perform a wide range of visual tasks.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Which AI Domain Does It Belong To? -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingTwo">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseTwo"
+              aria-expanded="false"
+              aria-controls="collapseTwo"
+              data-translate="cvAITitle"
+            >
+              Which AI Domain Does It Belong To?
+            </button>
+          </h2>
+          <div
+            id="collapseTwo"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingTwo"
+            data-bs-parent="#cvAccordion"
+          >
+            <div class="accordion-body" data-translate="cvAIContent">
+              <p>
+                Computer Vision is a vital subfield of artificial intelligence that lies at the intersection of machine learning and deep learning. It focuses on enabling machines to extract meaningful information from visual data, making it integral to robotics, autonomous systems, and real-time decision-making applications.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- History and Evolution -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingThree">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseThree"
+              aria-expanded="false"
+              aria-controls="collapseThree"
+              data-translate="cvHistoryTitle"
+            >
+              History and Evolution
+            </button>
+          </h2>
+          <div
+            id="collapseThree"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingThree"
+            data-bs-parent="#cvAccordion"
+          >
+            <div class="accordion-body" data-translate="cvHistoryContent">
+              <p>
+                The field of Computer Vision began in the 1960s with basic image processing techniques. With the rise of computational power and deep learning, it has evolved dramatically. Bilgisayarlı görü, 1960’larda temel görüntü işleme teknikleriyle başlamış, sonrasında hesaplama gücündeki artış ve derin öğrenme ile devrim niteliğinde gelişmeler yaşamıştır. It now encompasses advanced tasks such as object recognition and scene understanding.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Python Code Examples -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingFour">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseFour"
+              aria-expanded="false"
+              aria-controls="collapseFour"
+              data-translate="cvPythonTitle"
+            >
+              Python Code Examples
+            </button>
+          </h2>
+          <div
+            id="collapseFour"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingFour"
+            data-bs-parent="#cvAccordion"
+          >
+            <div class="accordion-body" data-translate="cvPythonContent">
+              <p>
+                Below are detailed Python examples demonstrating key computer vision techniques.
+              </p>
+              <pre><code class="python">
+# Example: Face Detection using OpenCV’s Haar Cascades
+import cv2
+import numpy as np
+
+# Load the cascade classifier for face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Read the image
+img = cv2.imread('test.jpg')
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Detect faces in the image
+faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+
+# Draw rectangles around detected faces
+for (x, y, w, h) in faces:
+    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+# Display the output
+cv2.imshow('Face Detection', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+              </code></pre>
+            </div>
+          </div>
+        </div>
+        <!-- Sources -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingFive">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseFive"
+              aria-expanded="false"
+              aria-controls="collapseFive"
+              data-translate="cvSourcesTitle"
+            >
+              Sources
+            </button>
+          </h2>
+          <div
+            id="collapseFive"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingFive"
+            data-bs-parent="#cvAccordion"
+          >
+            <div class="accordion-body" data-translate="cvSourcesContent">
+              <ul>
+                <li>
+                  <a href="https://www.coursera.org/specializations/computer-vision" target="_blank">
+                    Coursera - Computer Vision Specialization
+                  </a>: A comprehensive program covering advanced computer vision techniques.
+                </li>
+                <li>
+                  <a href="https://www.udacity.com/course/computer-vision-nanodegree--nd891" target="_blank">
+                    Udacity - Computer Vision Nanodegree
+                  </a>: Hands-on projects and real-world applications in computer vision.
+                </li>
+                <li>
+                  <a href="https://github.com/opencv/opencv" target="_blank">
+                    OpenCV GitHub
+                  </a>: The open source repository for the widely-used computer vision library.
+                </li>
+                <li>
+                  <a href="https://www.tensorflow.org/" target="_blank">
+                    TensorFlow
+                  </a>: A robust platform for developing deep learning models.
+                </li>
+                <li>
+                  <a href="https://mediapipe.dev/" target="_blank">
+                    MediaPipe
+                  </a>: An innovative framework for real-time computer vision solutions.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Top Info Section -->
+
+    <br />
+
+    <!-- Main Modules Section -->
+    <div class="container my-4">
+      <div class="row g-4">
+        <!-- (C) Body Pose Analysis Module -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="bodyPoseTitle">
+              <i class="fas fa-person"></i>
+              <span data-translate="bodyPoseTitle">Body Pose Analysis</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduBodyPose" aria-expanded="false" aria-controls="eduBodyPose">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduBodyPose">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Body Pose Analysis using TensorFlow and MoveNet
+import tensorflow as tf
+import cv2
+import numpy as np
+
+model = tf.saved_model.load('movenet_model_directory')
+frame = cv2.imread('person.jpg')
+results = model(frame)
+print("Pose detected: Right arm raised!")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Pose detected: Right arm raised!</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="bodyLoader" class="spinner"></div>
+              <video id="bodyVideo" style="display: none;"></video>
+              <canvas id="bodyCanvas"></canvas>
+              <div id="bodyTask" class="task-message" data-translate="bodyTaskMsg">Task: Raise your right arm!</div>
+              <div class="stats mt-2">
+                <span id="bodyFps">FPS: -</span>
+                <span id="bodyLandmarks">Landmarks: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startBodyPoseDetection()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopBodyPoseDetection()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Body Pose Analysis')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#bodyInfo"
+                  aria-expanded="false"
+                  aria-controls="bodyInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="bodyInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="bodyHowItWorksTitle">Body Pose Analysis</strong><br />
+                    <span data-translate="bodyHowItWorksTextEN" style="display: none;">
+                      This module uses TensorFlow.js and the MoveNet model to accurately detect and track body keypoints in real time.
+                    </span>
+                    <span data-translate="bodyHowItWorksTextTR" style="display: none;">
+                      Bu modül, TensorFlow.js ve MoveNet modeli kullanarak vücudunuzun ana noktalarını gerçek zamanlı olarak algılar ve izler.
+                    </span>
+                    <div id="bodyHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- (D) Hand Gesture Detection Module -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="handTitle">
+              <i class="fas fa-hand-paper"></i>
+              <span data-translate="handTitle">Hand Gesture Detection</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduHandGesture" aria-expanded="false" aria-controls="eduHandGesture">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduHandGesture">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Hand Gesture Detection using MediaPipe
+import mediapipe as mp
+import cv2
+
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=1)
+frame = cv2.imread('hand.jpg')
+results = hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+if results.multi_hand_landmarks:
+    print("Hand gesture detected: Waving!")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Hand gesture detected: Waving!</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="handLoader" class="spinner"></div>
+              <video id="handVideo" style="display: none;"></video>
+              <canvas id="handCanvas"></canvas>
+              <div id="handTask" class="task-message" data-translate="handTaskMsg">Task: Wave your hand!</div>
+              <div class="stats mt-2">
+                <span id="handFps">FPS: -</span>
+                <span id="handLandmarks">Landmarks: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startHandPoseDetection()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopHandPoseDetection()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Hand Gesture Detection')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#handInfo"
+                  aria-expanded="false"
+                  aria-controls="handInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="handInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="handHowItWorksTitle">Hand Gesture Detection</strong><br />
+                    <span data-translate="handHowItWorksTextEN" style="display: none;">
+                      This module uses MediaPipe Hands to analyze your finger positions and recognize specific gestures.
+                    </span>
+                    <span data-translate="handHowItWorksTextTR" style="display: none;">
+                      Bu modül, MediaPipe Hands kullanarak parmak pozisyonlarınızı analiz eder ve belirli hareketleri algılar.
+                    </span>
+                    <div id="handHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- (E) Emotion Analysis Module -->
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header text-center" data-translate="emotionTitle">
+              <i class="fas fa-smile"></i>
+              <span data-translate="emotionTitle">Emotion Analysis</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduEmotion" aria-expanded="false" aria-controls="eduEmotion">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduEmotion">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Emotion Analysis using OpenCV and a pre-trained model
+import cv2
+import numpy as np
+
+frame = cv2.imread('face.jpg')
+print("Detected emotion: Happy (85%)")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Detected emotion: Happy (85%)</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="emotionLoader" class="spinner"></div>
+              <video id="emotionVideo" style="display: none;"></video>
+              <canvas id="emotionCanvas"></canvas>
+              <div id="emotionTask" class="task-message" data-translate="emotionTaskMsg">Task: Show your facial expression!</div>
+              <div class="stats mt-2">
+                <span id="emotionFps">FPS: -</span>
+                <span id="emotionResult">Emotion: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startEmotionAnalysis()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopEmotionAnalysis()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Emotion Analysis')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#emotionInfo"
+                  aria-expanded="false"
+                  aria-controls="emotionInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="emotionInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="emotionHowItWorksTitle">Emotion Analysis</strong><br />
+                    <span data-translate="emotionHowItWorksTextEN" style="display: none;">
+                      This module uses face-api.js along with deep learning models to analyze your facial expressions in real time.
+                    </span>
+                    <span data-translate="emotionHowItWorksTextTR" style="display: none;">
+                      Bu modül, face-api.js ve derin öğrenme modellerini kullanarak yüz ifadenizi gerçek zamanlı olarak analiz eder.
+                    </span>
+                    <div id="emotionHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <h6 class="text-center" data-translate="emotionChartTitle">Emotion Distribution Graph</h6>
+                <canvas id="emotionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- (F) Face Recognition & Speech Estimation Module -->
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header text-center" data-translate="faceRecogTitle">
+              <i class="fas fa-user"></i>
+              <span data-translate="faceRecogTitle">Face Recognition &amp; Speech Estimation</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduFaceRecog" aria-expanded="false" aria-controls="eduFaceRecog">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduFaceRecog">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Face Recognition using OpenCV and dlib
+import cv2
+import dlib
+
+detector = dlib.get_frontal_face_detector()
+img = cv2.imread('face.jpg')
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+faces = detector(gray)
+if faces:
+    print("Face recognized: John Doe")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Face recognized: John Doe</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="faceLoader" class="spinner"></div>
+              <video id="faceVideo" style="display: none;"></video>
+              <!-- Enlarged canvas for better face details -->
+              <canvas id="faceCanvas" style="height: 500px; width: 100%; object-fit: cover;"></canvas>
+              <div id="faceSpeech" class="task-message" data-translate="faceSpeechMsg">
+                Speech Estimation: (Simulation: Speaking...)
+              </div>
+              <div class="stats mt-2">
+                <span id="faceFps">FPS: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startFaceDetection()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopFaceDetection()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Face Recognition & Speech Estimation')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#faceInfo"
+                  aria-expanded="false"
+                  aria-controls="faceInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="faceInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="faceHowItWorksTitle">Face Recognition (Face Mesh) &amp; Speech Estimation</strong><br />
+                    <span data-translate="faceHowItWorksTextEN" style="display: none;">
+                      This module uses MediaPipe Face Mesh to detect 468 facial landmarks and simulates speech estimation based on facial movements.
+                    </span>
+                    <span data-translate="faceHowItWorksTextTR" style="display: none;">
+                      Bu modül, MediaPipe Face Mesh kullanarak 468 yüz işaret noktasını tespit eder ve yüz hareketlerine dayalı konuşma tahmini simülasyonu gerçekleştirir.
+                    </span>
+                    <div id="faceHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Example Projects Section -->
+      <div class="row g-4 mt-4">
+        <!-- (G) Object Detection (COCO-SSD) -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="objectTitle">
+              <i class="fas fa-shapes"></i>
+              <span data-translate="objectTitle">Object Detection (COCO-SSD)</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduObject" aria-expanded="false" aria-controls="eduObject">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduObject">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Object Detection using TensorFlow and COCO-SSD
+import cv2
+import numpy as np
+import tensorflow as tf
+
+print("Object detected: Person (95% confidence)")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Object detected: Person (95% confidence)</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="objectLoader" class="spinner"></div>
+              <video id="objectVideo" style="display: none;"></video>
+              <canvas id="objectCanvas"></canvas>
+              <div id="objectTask" class="task-message" data-translate="objectTaskMsg">
+                Task: Show an object in front of your camera!
+              </div>
+              <div class="stats mt-2">
+                <span id="objectFps">FPS: -</span>
+                <span id="objectDetections">Detections: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startObjectDetection()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopObjectDetection()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Object Detection (COCO-SSD)')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#objectInfo"
+                  aria-expanded="false"
+                  aria-controls="objectInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="objectInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="objectHowItWorksTitle">Object Detection (COCO-SSD)</strong><br />
+                    <span data-translate="objectHowItWorksTextEN" style="display: none;">
+                      This module utilizes the COCO-SSD model to detect various objects in real time.
+                    </span>
+                    <span data-translate="objectHowItWorksTextTR" style="display: none;">
+                      Bu modül, COCO-SSD modelini kullanarak gerçek zamanlı olarak çeşitli nesneleri tespit eder.
+                    </span>
+                    <div id="objectHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- (H) Motion Detection (Background Subtraction) -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="motionTitle">
+              <i class="fas fa-user-secret"></i>
+              <span data-translate="motionTitle">Motion Detection (Background Subtraction)</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduMotion" aria-expanded="false" aria-controls="eduMotion">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduMotion">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Motion Detection using background subtraction
+import cv2
+
+print("Motion detected!")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Motion detected!</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="motionLoader" class="spinner"></div>
+              <video id="motionVideo" style="display: none;"></video>
+              <canvas id="motionCanvas"></canvas>
+              <div id="motionTask" class="task-message" data-translate="motionTaskMsg">
+                Task: Move or wave something to trigger motion detection!
+              </div>
+              <div class="stats mt-2">
+                <span id="motionFps">FPS: -</span>
+                <span id="motionStatus">Motion: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startMotionDetection()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopMotionDetection()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Motion Detection (Background Subtraction)')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#motionInfo"
+                  aria-expanded="false"
+                  aria-controls="motionInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="motionInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="motionHowItWorksTitle">Motion Detection (Background Subtraction)</strong><br />
+                    <span data-translate="motionHowItWorksTextEN" style="display: none;">
+                      This module implements a simple background subtraction algorithm to detect motion.
+                    </span>
+                    <span data-translate="motionHowItWorksTextTR" style="display: none;">
+                      Bu modül, arka plan çıkarma algoritması kullanarak hareketi tespit eder.
+                    </span>
+                    <div id="motionHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: Additional Modules Row for Fun Icon Overlay & Emoji Party -->
+      <div class="row g-4 mt-4">
+        <!-- (I) Fun Icon Overlay Module -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="iconOverlayTitle">
+              <i class="fas fa-smile-beam"></i>
+              <span data-translate="iconOverlayTitle">Fun Icon Overlay</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module for Fun Icon Overlay -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduIconOverlay" aria-expanded="false" aria-controls="eduIconOverlay">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduIconOverlay">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Simulating Fun Icon Overlay
+print("Overlaying fun icons with oscillating effect...")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Overlaying fun icons with oscillating effect...</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="iconOverlayLoader" class="spinner"></div>
+              <video id="iconOverlayVideo" style="display: none;"></video>
+              <canvas id="iconOverlayCanvas"></canvas>
+              <div id="iconOverlayTask" class="task-message" data-translate="iconOverlayTaskMsg">
+                Task: Enjoy the fun icons overlay!
+              </div>
+              <div class="stats mt-2">
+                <span id="iconOverlayFps">FPS: -</span>
+                <span id="iconOverlayLevel">Level: 1</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startIconOverlay()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopIconOverlay()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Fun Icon Overlay')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#iconOverlayInfo"
+                  aria-expanded="false"
+                  aria-controls="iconOverlayInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="iconOverlayInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="iconOverlayHowItWorksTitle">Fun Icon Overlay</strong><br />
+                    <span data-translate="iconOverlayHowItWorksTextEN" style="display: none;">
+                      This module uses your camera feed to overlay fun icons that add a playful twist. A level system increases your excitement by shortening the icon update interval as you level up.
+                    </span>
+                    <span data-translate="iconOverlayHowItWorksTextTR" style="display: none;">
+                      Bu modül, kameranızın görüntüsüne eğlenceli ikonlar ekler. Entegre seviye sistemi sayesinde, seviye yükseldikçe ikon güncelleme aralığı kısalır ve deneyiminiz daha dinamik hale gelir.
+                    </span>
+                    <div id="iconOverlayHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- (J) Emoji Party Module -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header text-center" data-translate="emojiPartyTitle">
+              <i class="fas fa-grin-stars"></i>
+              <span data-translate="emojiPartyTitle">Emoji Party</span>
+            </div>
+            <div class="card-body">
+              <!-- Educational Module for Emoji Party -->
+              <div class="mt-3 edu-module">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#eduEmojiParty" aria-expanded="false" aria-controls="eduEmojiParty">
+                  Educational Module
+                </button>
+                <div class="collapse" id="eduEmojiParty">
+                  <div class="card card-body mt-2">
+                    <pre><code class="python">
+# Example Python code for Interactive Emoji Party
+print("Starting interactive emoji tasks...")
+print("Task: Turn your head right -> Emoji: 😎")
+                    </code></pre>
+                    <div class="output-box">
+                      Output:
+                      <pre>Starting interactive emoji tasks...
+Task: Turn your head right -> Emoji: 😎</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="emojiPartyLoader" class="spinner"></div>
+              <video id="emojiPartyVideo" style="display: none;"></video>
+              <canvas id="emojiPartyCanvas"></canvas>
+              <div id="emojiPartyTask" class="task-message" data-translate="emojiPartyTaskMsg">
+                Task: Let the emoji party begin!
+              </div>
+              <div class="stats mt-2">
+                <span id="emojiPartyFps">FPS: -</span>
+                <span id="emojiPartyCount">Emojis: -</span>
+              </div>
+              <div class="controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-start" onclick="startEmojiParty()" data-translate="startBtn">Start</button>
+                <button class="btn btn-stop" onclick="stopEmojiParty()" data-translate="stopBtn">Stop</button>
+                <button class="share-btn" onclick="openShareModal('Emoji Party')" data-translate="shareBtn">Share!</button>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#emojiPartyInfo"
+                  aria-expanded="false"
+                  aria-controls="emojiPartyInfo"
+                  data-translate="howItWorksBtn"
+                >
+                  How it Works?
+                </button>
+                <div class="collapse" id="emojiPartyInfo">
+                  <div class="card card-body mt-2">
+                    <strong data-translate="emojiPartyHowItWorksTitle">Emoji Party</strong><br />
+                    <span data-translate="emojiPartyHowItWorksTextEN" style="display: none;">
+                      This module transforms your video feed into an interactive emoji party by using Face Mesh and Hands detection to trigger tasks such as turning your head, blinking, or placing your hand on your head. When a task is recognized, the corresponding emoji is displayed for 2 seconds before moving on.
+                    </span>
+                    <span data-translate="emojiPartyHowItWorksTextTR" style="display: none;">
+                      Bu modül, Face Mesh ve Hands tespiti ile başınızı çevirme, göz kırpma veya elinizi başınıza koyma gibi görevleri algılar and once the task is completed, displays the corresponding emoji for 2 seconds before moving on.
+                    </span>
+                    <div id="emojiPartyHowItWorksDynamic"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Additional Modules Row -->
+    </div>
+    <!-- End Main Modules Section -->
+
+    <footer class="footer">
+      <p>
+        © 2024 AI'Han Academy All Rights Reserved |
+        <a href="mailto:ayhanbzkrt@gmail.com">Email</a> |
+        <a href="https://github.com/ayhanbzkrt" target="_blank">GitHub</a> |
+        <a href="https://www.linkedin.com/in/ayhanbozkurt/" target="_blank">LinkedIn</a>
+      </p>
+      <p style="font-size: 0.8em; margin-top: 10px;">
+        <strong>Data Security and Privacy:</strong> This application processes user data...
+      </p>
+      <p style="font-size: 0.8em; margin-top: 10px;">
+        Use the "Share!" buttons to share your achievements on social media.
+      </p>
+    </footer>
+
+    <!-- Help / FAQ Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="helpModalLabel" data-translate="helpModalTitle">Help &amp; FAQ</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="faq-panel">
+              <h3 data-translate="faqDataSecurity">Data Security and Privacy</h3>
+              <p data-translate="faqDataSecurityDesc">
+                This application runs solely in your browser and does not store any personal data on remote servers.
+              </p>
+            </div>
+            <div class="faq-panel">
+              <h3 data-translate="faqBodyPose">How does Body Pose Analysis work?</h3>
+              <p data-translate="faqBodyPoseDesc">
+                Using TensorFlow.js and MoveNet, the module detects key body points and analyzes your pose in real time.
+              </p>
+            </div>
+            <div class="faq-panel">
+              <h3 data-translate="faqHandGesture">How does Hand Gesture Detection work?</h3>
+              <p data-translate="faqHandGestureDesc">
+                MediaPipe Hands analyzes the position and movement of your fingers to recognize hand gestures.
+              </p>
+            </div>
+            <div class="faq-panel">
+              <h3 data-translate="faqEmotion">How does Emotion Analysis work?</h3>
+              <p data-translate="faqEmotionDesc">
+                Face-api.js along with deep learning models analyze your facial expression in real time to determine your mood.
+              </p>
+            </div>
+            <div class="faq-panel">
+              <h3 data-translate="faqFaceRecog">How does Face Recognition &amp; Speech Estimation work?</h3>
+              <p data-translate="faqFaceRecogDesc">
+                MediaPipe Face Mesh detects 468 facial landmarks which are used to perform face recognition and simulate speech estimation.
+              </p>
+            </div>
+            <div class="faq-panel">
+              <h3 data-translate="faqPerformance">Performance and Model Loading</h3>
+              <p data-translate="faqPerformanceDesc">
+                All models are loaded asynchronously in the background using WebGL acceleration to ensure optimal performance.
+              </p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="faqCloseBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger Help / FAQ Modal -->
+    <div style="text-align: center; margin: 20px 0;">
+      <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#helpModal" data-translate="faqTriggerBtn">Help / FAQ</button>
+    </div>
+
+    <!-- Modal for Social Sharing -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Share Your Achievement!</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body d-flex flex-column align-items-center">
+            <p style="font-size: 0.9em; text-align: center;">
+              AI'Han Academy Rocks! I'm diving deep into AI and computer vision—come and experience it for yourself!
+            </p>
+            <div class="d-flex flex-column gap-2" style="width:100%;">
+              <button class="btn btn-sm btn-outline-primary" id="shareTwitterBtn"><i class="fab fa-twitter"></i> Share on Twitter (X)</button>
+              <button class="btn btn-sm btn-outline-primary" id="shareFacebookBtn"><i class="fab fa-facebook"></i> Share on Facebook</button>
+              <button class="btn btn-sm btn-outline-primary" id="shareInstaBtn"><i class="fab fa-instagram"></i> Share on Instagram</button>
+              <button class="btn btn-sm btn-outline-primary" id="shareLinkedinBtn"><i class="fab fa-linkedin"></i> Share on LinkedIn</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Audio Elements for Sound Effects -->
+    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/button-09.mp3"></audio>
+
+    <script>
+      tf.setBackend("webgl");
+
+      /* ----------------------------------------------------------------
+         (A) INTRO SEQUENCE (FACE DETECTION + TTS)
+      ---------------------------------------------------------------- */
+      let faceMeshIntro = null;
+      let faceIntroCamera = null;
+      let faceIntroStream = null;
+      let introTimeout = null;
+      const introTTS =
+        "Welcome to AI'Han Academy - Computer Vision Lab! Get ready to explore the incredible world of AI!";
+
+      async function startIntroFaceDetection() {
+        faceMeshIntro = new FaceMesh({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+        faceMeshIntro.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+        faceMeshIntro.onResults((results) => {
+          const canvas = document.getElementById("faceCanvas");
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length) {
+            const landmarks = results.multiFaceLandmarks[0];
+            landmarks.forEach((pt) => {
+              ctx.beginPath();
+              ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 2, 0, 2 * Math.PI);
+              ctx.fillStyle = "orange";
+              ctx.fill();
+            });
+          }
+        });
+
+        try {
+          faceIntroStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const faceVideo = document.getElementById("faceVideo");
+          faceVideo.srcObject = faceIntroStream;
+          await faceVideo.play();
+          const faceCanvas = document.getElementById("faceCanvas");
+          faceCanvas.width = faceVideo.videoWidth;
+          faceCanvas.height = faceVideo.videoHeight;
+
+          faceIntroCamera = new Camera(faceVideo, {
+            onFrame: async () => {
+              await faceMeshIntro.send({ image: faceVideo });
+            },
+            width: faceVideo.videoWidth,
+            height: faceVideo.videoHeight,
+          });
+          faceIntroCamera.start();
+        } catch (err) {
+          console.error("Intro face detection error:", err);
+        }
+      }
+
+      function playIntroTTS() {
+        const utter = new SpeechSynthesisUtterance(introTTS);
+        utter.lang = "en-US";
+        speechSynthesis.speak(utter);
+      }
+
+      function stopIntroFaceDetection() {
+        if (faceIntroCamera) {
+          faceIntroCamera.stop();
+          faceIntroCamera = null;
+        }
+        if (faceIntroStream) {
+          faceIntroStream.getTracks().forEach((t) => t.stop());
+          faceIntroStream = null;
+        }
+      }
+
+      function doIntroSequence() {
+        startIntroFaceDetection();
+        playIntroTTS();
+        introTimeout = setTimeout(() => {
+          stopIntroFaceDetection();
+        }, 5000);
+      }
+
+      /* ----------------------------------------------------------------
+         (B) MULTI-LANGUAGE SETUP (INCLUDING NEW MODULES)
+      ---------------------------------------------------------------- */
+      const translations = {
+        EN: {
+          greeting: "Hello, I'm AI'Han!",
+          portalTitle: "AI'Han Academy - Computer Vision Lab",
+          howItWorksTitle: "How Our Platform Works",
+          platformDesc:
+            "Our lab leverages cutting-edge AI and machine learning technologies to integrate state-of-the-art modules including Body Pose Analysis, Hand Gesture Detection, Emotion Analysis, Face Recognition & Speech Estimation, Object Detection, Motion Detection, Fun Icon Overlay, and Emoji Party. Each module is built upon advanced algorithms that push the boundaries of computer vision.",
+          bodyPoseInfo: "Body Pose Analysis: Powered by TensorFlow.js and MoveNet.",
+          handGestureInfo: "Hand Gesture Detection: Utilizing MediaPipe Hands.",
+          emotionInfo: "Emotion Analysis: With face-api.js.",
+          faceRecogInfo: "Face Recognition & Speech Estimation: This module uses MediaPipe Face Mesh.",
+          platformConclusion: "Explore our platform to experience the transformative power of computer vision.",
+          cvWhatTitle: "What is Computer Vision?",
+          cvWhatContent: "Computer Vision is a branch of artificial intelligence that enables computers to interpret and understand digital images and videos. It utilizes image processing, machine learning, and deep learning techniques to perform tasks such as object detection, classification, and tracking.",
+          cvAITitle: "Which AI Domain Does It Belong To?",
+          cvAIContent: "Computer Vision is a vital subfield of AI that intersects with machine learning and deep learning. It enables systems to analyze visual data, making it crucial for applications in robotics, autonomous vehicles, and surveillance.",
+          cvHistoryTitle: "History and Evolution",
+          cvHistoryContent: "The field of Computer Vision began in the 1960s with basic image processing techniques. With the rise of computational power and deep learning, it has evolved dramatically. Bilgisayarlı görü, 1960’larda temel görüntü işleme teknikleriyle başlamış, sonrasında hesaplama gücündeki artış ve derin öğrenme ile devrim niteliğinde gelişmeler yaşamıştır. It now encompasses advanced tasks such as object recognition and scene understanding.",
+          cvPythonTitle: "Python Code Examples",
+          cvPythonContent: "Below are detailed Python examples demonstrating key computer vision techniques.",
+          cvSourcesTitle: "Sources",
+          cvSourcesContent: `<ul>
+  <li><a href="https://www.coursera.org/specializations/computer-vision" target="_blank">Coursera - Computer Vision Specialization</a>: A comprehensive program covering advanced computer vision techniques.</li>
+  <li><a href="https://www.udacity.com/course/computer-vision-nanodegree--nd891" target="_blank">Udacity - Computer Vision Nanodegree</a>: Hands-on projects and real-world applications in computer vision.</li>
+  <li><a href="https://github.com/opencv/opencv" target="_blank">OpenCV GitHub</a>: The open source repository for the widely-used computer vision library.</li>
+  <li><a href="https://www.tensorflow.org/" target="_blank">TensorFlow</a>: A robust platform for developing deep learning models.</li>
+  <li><a href="https://mediapipe.dev/" target="_blank">MediaPipe</a>: An innovative framework for real-time computer vision solutions.</li>
+</ul>`,
+          bodyPoseTitle: "Body Pose Analysis",
+          bodyTaskMsg: "Task: Raise your right arm!",
+          startBtn: "Start",
+          stopBtn: "Stop",
+          shareBtn: "Share!",
+          howItWorksBtn: "How it Works?",
+          bodyHowItWorksTitle: "Body Pose Analysis",
+          bodyHowItWorksTextEN: "This module uses TensorFlow.js and the MoveNet model to accurately detect and track body keypoints in real time.",
+          bodyHowItWorksTextTR: "Bu modül, TensorFlow.js ve MoveNet modeli kullanarak vücudunuzun ana noktalarını gerçek zamanlı olarak algılar ve izler.",
+          handTitle: "Hand Gesture Detection",
+          handTaskMsg: "Task: Wave your hand!",
+          handHowItWorksTitle: "Hand Gesture Detection",
+          handHowItWorksTextEN: "This module uses MediaPipe Hands to analyze your finger positions and recognize gestures.",
+          handHowItWorksTextTR: "Bu modül, MediaPipe Hands kullanarak parmak pozisyonlarınızı analiz eder ve belirli hareketleri algılar.",
+          emotionTitle: "Emotion Analysis",
+          emotionTaskMsg: "Task: Show your facial expression!",
+          emotionChartTitle: "Emotion Distribution Graph",
+          emotionHowItWorksTitle: "Emotion Analysis",
+          emotionHowItWorksTextEN: "This module uses face-api.js along with deep learning models to analyze your facial expressions in real time.",
+          emotionHowItWorksTextTR: "Bu modül, face-api.js ve derin öğrenme modellerini kullanarak yüz ifadenizi gerçek zamanlı olarak analiz eder.",
+          faceRecogTitle: "Face Recognition & Speech Estimation",
+          faceSpeechMsg: "Speech Estimation: (Simulation: Speaking...)",
+          faceHowItWorksTitle: "Face Recognition (Face Mesh) & Speech Estimation",
+          faceHowItWorksTextEN: "This module uses MediaPipe Face Mesh to detect 468 facial landmarks and simulates speech estimation based on facial movements.",
+          faceHowItWorksTextTR: "Bu modül, MediaPipe Face Mesh kullanarak 468 yüz işaret noktasını tespit eder ve yüz hareketlerine dayalı konuşma tahmini simülasyonu gerçekleştirir.",
+          objectTitle: "Object Detection (COCO-SSD)",
+          objectTaskMsg: "Task: Show an object in front of your camera!",
+          objectHowItWorksTitle: "Object Detection (COCO-SSD)",
+          objectHowItWorksTextEN: "This module utilizes the COCO-SSD model to detect various objects in real time.",
+          objectHowItWorksTextTR: "Bu modül, COCO-SSD modelini kullanarak gerçek zamanlı olarak çeşitli nesneleri tespit eder.",
+          motionTitle: "Motion Detection (Background Subtraction)",
+          motionTaskMsg: "Task: Move or wave something to trigger motion detection!",
+          motionHowItWorksTitle: "Motion Detection (Background Subtraction)",
+          motionHowItWorksTextEN: "This module implements a simple background subtraction algorithm to detect motion.",
+          motionHowItWorksTextTR: "Bu modül, arka plan çıkarma algoritması kullanarak hareketi tespit eder.",
+          helpModalTitle: "Help & FAQ",
+          faqDataSecurity: "Data Security and Privacy",
+          faqDataSecurityDesc: "This application runs solely in your browser and does not store any personal data on remote servers.",
+          faqBodyPose: "How does Body Pose Analysis work?",
+          faqBodyPoseDesc: "Using TensorFlow.js and MoveNet, your body’s key points are detected and analyzed in real time.",
+          faqHandGesture: "How does Hand Gesture Detection work?",
+          faqHandGestureDesc: "MediaPipe Hands analyzes your finger positions to recognize gestures.",
+          faqEmotion: "How does Emotion Analysis work?",
+          faqEmotionDesc: "Face-api.js along with deep learning models analyze your facial expression in real time.",
+          faqFaceRecog: "How does Face Recognition & Speech Estimation work?",
+          faqFaceRecogDesc: "MediaPipe Face Mesh detects 468 facial landmarks to perform face recognition and simulate speech estimation.",
+          faqPerformance: "Performance and Model Loading",
+          faqPerformanceDesc: "All models load asynchronously in the background using WebGL acceleration to ensure optimal performance.",
+          faqCloseBtn: "Close",
+          faqTriggerBtn: "Help / FAQ",
+          iconOverlayTitle: "Fun Icon Overlay",
+          iconOverlayTaskMsg: "Task: Enjoy the fun icons overlay!",
+          iconOverlayHowItWorksTitle: "Fun Icon Overlay",
+          iconOverlayHowItWorksTextEN: "This module uses your camera feed to overlay fun icons that add a playful twist. A level system increases your excitement by shortening the icon update interval as you level up.",
+          iconOverlayHowItWorksTextTR: "Bu modül, kameranızın görüntüsüne eğlenceli ikonlar ekler. Seviye sistemi sayesinde, seviye yükseldikçe ikon güncelleme aralığı kısalır ve deneyiminiz daha dinamik hale gelir.",
+          emojiPartyTitle: "Emoji Party",
+          emojiPartyTaskMsg: "Task: Let the emoji party begin!",
+          emojiPartyHowItWorksTitle: "Emoji Party",
+          emojiPartyHowItWorksTextEN: "This module transforms your video feed into an interactive emoji party by using Face Mesh and Hands detection to trigger tasks such as turning your head, blinking, or placing your hand on your head. When a task is recognized, the corresponding emoji is displayed for 2 seconds before moving on.",
+          emojiPartyHowItWorksTextTR: "Bu modül, Face Mesh ve Hands tespiti ile başınızı çevirme, göz kırpma veya elinizi başınıza koyma gibi görevleri algılar and once the task is completed, displays the corresponding emoji for 2 seconds before moving on."
+        },
+        TR: {
+          greeting: "Merhaba, ben AI'Han!",
+          portalTitle: "AI'Han Academy - Bilgisayarlı Görü Laboratuvarı",
+          howItWorksTitle: "Platformumuz Nasıl Çalışır?",
+          platformDesc:
+            "Laboratuvarımız, yapay zeka ve makine öğrenimi teknolojilerini kullanarak; Vücut Pose Analizi, El Hareketi Tespiti, Duygu Analizi, Yüz Tanıma & Konuşma Tahmini, Nesne Tespiti, Hareket Tespiti, Eğlenceli İkon Örtüsü ve Emojili Parti gibi ileri düzey modülleri entegre eder. Her modül, bilgisayarlı görü alanında mümkün olanın ötesine geçmeyi hedefleyen gelişmiş algoritmalar üzerine kuruludur.",
+          bodyPoseInfo: "Vücut Pose Analizi: TensorFlow.js ve MoveNet ile güçlendirilmiştir.",
+          handGestureInfo: "El Hareketi Tespiti: MediaPipe Hands kullanılarak gerçekleştirilir.",
+          emotionInfo: "Duygu Analizi: face-api.js ile yüz ifadeniz analiz edilir.",
+          faceRecogInfo: "Yüz Tanıma & Konuşma Tahmini: Bu modül, MediaPipe Face Mesh kullanır.",
+          platformConclusion: "Platformumuzu keşfedin ve bilgisayarlı görü teknolojilerinin gücünü deneyimleyin.",
+          cvWhatTitle: "Computer Vision Nedir?",
+          cvWhatContent: "Computer Vision, bilgisayarların dijital görüntüleri ve videoları yorumlayıp anlamasını sağlayan bir yapay zeka dalıdır. Görüntü işleme, nesne tanıma ve sahne analizi gibi teknikleri içerir.",
+          cvAITitle: "Hangi Yapay Zeka Konusuna Girer?",
+          cvAIContent: "Computer Vision, makine öğrenmesi ve derin öğrenmenin önemli bir alt dalıdır. Bu alan, görsel verinin analizinde büyük rol oynar ve otonom sistemler, robotik ve güvenlik uygulamaları için kritik öneme sahiptir.",
+          cvHistoryTitle: "Gelişimi ve Tarihçesi",
+          cvHistoryContent: "Bilgisayarlı görü alanı, 1960’larda temel görüntü işleme teknikleriyle başlamış; hesaplama gücündeki artış ve derin öğrenme ile devrim niteliğinde gelişmeler yaşamıştır. Bilgisayarların dijital görüntüleri yorumlayıp anlaması, günümüzde birçok uygulamanın temelini oluşturmaktadır.",
+          cvPythonTitle: "Python Kod Örnekleri",
+          cvPythonContent: "Aşağıda, bilgisayarlı görü tekniklerini gösteren detaylı Python kod örnekleri yer almaktadır.",
+          cvSourcesTitle: "Kaynaklar",
+          cvSourcesContent: `<ul>
+  <li><a href="https://www.coursera.org/specializations/computer-vision" target="_blank">Coursera - Computer Vision Specialization</a>: Gelişmiş bilgisayarlı görü tekniklerini kapsayan kapsamlı bir program.</li>
+  <li><a href="https://www.udacity.com/course/computer-vision-nanodegree--nd891" target="_blank">Udacity - Computer Vision Nanodegree</a>: Gerçek dünya projeleri ve uygulamalı örneklerle dolu detaylı eğitim.</li>
+  <li><a href="https://github.com/opencv/opencv" target="_blank">OpenCV GitHub</a>: Görüntü işleme ve bilgisayarlı görü uygulamaları için en popüler açık kaynak kütüphanesi.</li>
+  <li><a href="https://www.tensorflow.org/" target="_blank">TensorFlow</a>: Derin öğrenme modellerinin geliştirilmesinde kullanılan geniş çaplı bir platform.</li>
+  <li><a href="https://mediapipe.dev/" target="_blank">MediaPipe</a>: Gerçek zamanlı görüntü işleme çözümleri sunan yenilikçi bir framework.</li>
+</ul>`,
+          bodyPoseTitle: "Vücut Pose Analizi",
+          bodyTaskMsg: "Görev: Sağ kolunuzu kaldırın!",
+          startBtn: "Başlat",
+          stopBtn: "Durdur",
+          shareBtn: "Paylaş!",
+          howItWorksBtn: "Nasıl Çalışır?",
+          bodyHowItWorksTitle: "Vücut Pose Analizi",
+          bodyHowItWorksTextEN: "This module uses TensorFlow.js and the MoveNet model to accurately detect and track body keypoints in real time.",
+          bodyHowItWorksTextTR: "Bu modül, TensorFlow.js ve MoveNet modeli kullanarak vücudunuzun ana noktalarını gerçek zamanlı olarak algılar ve izler.",
+          handTitle: "El Hareketi Tespiti",
+          handTaskMsg: "Görev: Elinizi sallayın!",
+          handHowItWorksTitle: "El Hareketi Tespiti",
+          handHowItWorksTextEN: "This module uses MediaPipe Hands to analyze your finger positions and recognize gestures.",
+          handHowItWorksTextTR: "Bu modül, MediaPipe Hands kullanarak parmak pozisyonlarınızı analiz eder ve belirli hareketleri algılar.",
+          emotionTitle: "Duygu Analizi",
+          emotionTaskMsg: "Görev: Yüz ifadenizi gösterin!",
+          emotionChartTitle: "Duygu Dağılım Grafiği",
+          emotionHowItWorksTitle: "Duygu Analizi",
+          emotionHowItWorksTextEN: "This module uses face-api.js along with deep learning models to analyze your facial expressions in real time.",
+          emotionHowItWorksTextTR: "Bu modül, face-api.js ve derin öğrenme modellerini kullanarak yüz ifadenizi gerçek zamanlı olarak analiz eder.",
+          faceRecogTitle: "Yüz Tanıma & Konuşma Tahmini",
+          faceSpeechMsg: "Konuşma Tahmini: (Simülasyon: Konuşuyor...)",
+          faceHowItWorksTitle: "Yüz Tanıma (Face Mesh) & Konuşma Tahmini",
+          faceHowItWorksTextEN: "This module uses MediaPipe Face Mesh to detect 468 facial landmarks and simulates speech estimation based on facial movements.",
+          faceHowItWorksTextTR: "Bu modül, MediaPipe Face Mesh kullanarak 468 yüz işaret noktasını tespit eder ve yüz hareketlerine dayalı konuşma tahmini simülasyonu gerçekleştirir.",
+          objectTitle: "Nesne Tespiti (COCO-SSD)",
+          objectTaskMsg: "Görev: Kameranızın önüne bir nesne tutun!",
+          objectHowItWorksTitle: "Nesne Tespiti (COCO-SSD)",
+          objectHowItWorksTextEN: "This module utilizes the COCO-SSD model to detect various objects in real time.",
+          objectHowItWorksTextTR: "Bu modül, COCO-SSD modelini kullanarak gerçek zamanlı olarak çeşitli nesneleri tespit eder.",
+          motionTitle: "Hareket Tespiti (Arka Plan Çıkarma)",
+          motionTaskMsg: "Görev: Hareket veya bir cisim sallayarak tespiti deneyin!",
+          motionHowItWorksTitle: "Hareket Tespiti (Arka Plan Çıkarma)",
+          motionHowItWorksTextEN: "This module implements a simple background subtraction algorithm to detect motion.",
+          motionHowItWorksTextTR: "Bu modül, arka plan çıkarma algoritması kullanarak hareketi tespit eder.",
+          helpModalTitle: "Yardım & SSS",
+          faqDataSecurity: "Veri Güvenliği ve Gizlilik",
+          faqDataSecurityDesc: "Uygulama yalnızca tarayıcınızda çalışır ve kişisel verilerinizi uzak sunucularda saklamaz.",
+          faqBodyPose: "Vücut Pose Analizi nasıl çalışır?",
+          faqBodyPoseDesc: "TensorFlow.js ve MoveNet ile vücudunuzun ana noktaları tespit edilir ve gerçek zamanlı analiz yapılır.",
+          faqHandGesture: "El Hareketi Tespiti nasıl çalışır?",
+          faqHandGestureDesc: "MediaPipe Hands, parmak konumlarınızı analiz ederek el hareketlerinizi algılar.",
+          faqEmotion: "Duygu Analizi nasıl çalışır?",
+          faqEmotionDesc: "face-api.js ve derin öğrenme modelleri kullanılarak yüz ifadeniz gerçek zamanlı olarak analiz edilir.",
+          faqFaceRecog: "Yüz Tanıma & Konuşma Tahmini nasıl çalışır?",
+          faqFaceRecogDesc: "MediaPipe Face Mesh, 468 yüz işaret noktasını tespit ederek yüz tanıma ve konuşma tahmini gerçekleştirir.",
+          faqPerformance: "Performans ve Model Yükleme",
+          faqPerformanceDesc: "Tüm modeller, WebGL hızlandırması ile arka planda asenkron olarak yüklenir.",
+          faqCloseBtn: "Kapat",
+          faqTriggerBtn: "Yardım / SSS",
+          iconOverlayTitle: "Eğlenceli İkon Örtüsü",
+          iconOverlayTaskMsg: "Görev: Eğlenceli ikon örtüsünün keyfini çıkarın!",
+          iconOverlayHowItWorksTitle: "Eğlenceli İkon Örtüsü",
+          iconOverlayHowItWorksTextEN: "This module uses your camera feed to overlay fun icons that add a playful twist. A level system increases your excitement by shortening the icon update interval as you level up.",
+          iconOverlayHowItWorksTextTR: "Bu modül, kameranızın görüntüsüne eğlenceli ikonlar ekler. Entegre seviye sistemi sayesinde, seviye yükseldikçe ikon güncelleme aralığı kısalır ve deneyiminiz daha dinamik hale gelir.",
+          emojiPartyTitle: "Emojili Parti",
+          emojiPartyTaskMsg: "Görev: Emojili partiyi başlatın!",
+          emojiPartyHowItWorksTitle: "Emojili Parti",
+          emojiPartyHowItWorksTextEN: "This module transforms your video feed into an interactive emoji party by using Face Mesh and Hands detection to trigger tasks such as turning your head, blinking, or placing your hand on your head. When a task is recognized, the corresponding emoji is displayed for 2 seconds before moving on.",
+          emojiPartyHowItWorksTextTR: "Bu modül, Face Mesh ve Hands tespiti ile başınızı çevirme, göz kırpma veya elinizi başınıza koyma gibi görevleri algılar and once the task is completed, displays the corresponding emoji for 2 seconds before moving on."
+        }
+      };
+
+      let currentLang = "EN"; // default
+
+      function setLanguage(lang) {
+        currentLang = lang;
+        // Güncellenen kısım: eğer çeviri metninde "<" karakteri varsa innerHTML, yoksa textContent kullan
+        document.querySelectorAll("[data-translate]").forEach((elem) => {
+          const key = elem.getAttribute("data-translate");
+          if (translations[lang][key]) {
+            if (translations[lang][key].indexOf("<") !== -1) {
+              elem.innerHTML = translations[lang][key];
+            } else {
+              elem.textContent = translations[lang][key];
+            }
+          }
+        });
+        // Dynamic contents for educational modules
+        document.getElementById("bodyHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='bodyHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='bodyHowItWorksTextTR']").textContent;
+        document.getElementById("handHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='handHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='handHowItWorksTextTR']").textContent;
+        document.getElementById("emotionHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='emotionHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='emotionHowItWorksTextTR']").textContent;
+        document.getElementById("faceHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='faceHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='faceHowItWorksTextTR']").textContent;
+        document.getElementById("objectHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='objectHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='objectHowItWorksTextTR']").textContent;
+        document.getElementById("motionHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='motionHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='motionHowItWorksTextTR']").textContent;
+        // New modules dynamic texts
+        document.getElementById("iconOverlayHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='iconOverlayHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='iconOverlayHowItWorksTextTR']").textContent;
+        document.getElementById("emojiPartyHowItWorksDynamic").innerHTML =
+          lang === "EN"
+            ? document.querySelector("[data-translate='emojiPartyHowItWorksTextEN']").textContent
+            : document.querySelector("[data-translate='emojiPartyHowItWorksTextTR']").textContent;
+      }
+
+      document.getElementById("btnEN").addEventListener("click", () => setLanguage("EN"));
+      document.getElementById("btnTR").addEventListener("click", () => setLanguage("TR"));
+      setLanguage("EN");
+
+      /* ----------------------------------------------------------------
+         (C) SOUND & TTS
+      ---------------------------------------------------------------- */
+      function playClickSound() {
+        const clickSound = document.getElementById("clickSound");
+        if (clickSound) {
+          clickSound.currentTime = 0;
+          clickSound.play();
+        }
+      }
+
+      function announceTask(messageEN, messageTR) {
+        const utterance = new SpeechSynthesisUtterance(
+          currentLang === "EN" ? messageEN : messageTR
+        );
+        speechSynthesis.speak(utterance);
+      }
+
+      /* ----------------------------------------------------------------
+         (D) BODY POSE ANALYSIS
+      ---------------------------------------------------------------- */
+      let bodyDetector = null;
+      let bodyDetectionFrame;
+      let bodyFrameCount = 0;
+      let bodyLastTime = performance.now();
+      let bodyTaskCompleted = false;
+      const bodyVideo = document.getElementById("bodyVideo");
+      const bodyCanvas = document.getElementById("bodyCanvas");
+      const bodyCtx = bodyCanvas.getContext("2d");
+      const bodyLoader = document.getElementById("bodyLoader");
+      const bodyFpsSpan = document.getElementById("bodyFps");
+      const bodyLandmarksSpan = document.getElementById("bodyLandmarks");
+      const bodyTaskEl = document.getElementById("bodyTask");
+
+      const bodyTasks = [
+        {
+          type: "right_arm",
+          messageEN: "Task: Raise your right arm!",
+          messageTR: "Görev: Sağ kolunuzu kaldırın!",
+        },
+        {
+          type: "left_arm",
+          messageEN: "Task: Raise your left arm!",
+          messageTR: "Görev: Sol kolunuzu kaldırın!",
+        }
+      ];
+      let currentBodyTaskIndex = 0;
+
+      function nextBodyTask() {
+        currentBodyTaskIndex = (currentBodyTaskIndex + 1) % bodyTasks.length;
+        bodyTaskCompleted = false;
+        bodyTaskEl.textContent = currentLang === "EN"
+          ? bodyTasks[currentBodyTaskIndex].messageEN
+          : bodyTasks[currentBodyTaskIndex].messageTR;
+        bodyTaskEl.style.color = "var(--primary-color)";
+      }
+
+      function calculateAngle(a, b, c) {
+        const ab = { x: b.x - a.x, y: b.y - a.y };
+        const cb = { x: b.x - c.x, y: b.y - c.y };
+        const dot = ab.x * cb.x + ab.y * cb.y;
+        const magAB = Math.sqrt(ab.x ** 2 + ab.y ** 2);
+        const magCB = Math.sqrt(cb.x ** 2 + cb.y ** 2);
+        const cosAngle = dot / (magAB * magCB);
+        const angle = Math.acos(cosAngle);
+        return angle * (180 / Math.PI);
+      }
+
+      function drawSkeleton(ctx, keypoints) {
+        const connectPairs = [
+          [5, 6],
+          [5, 7],
+          [7, 9],
+          [6, 8],
+          [8, 10],
+          [5, 11],
+          [6, 12],
+          [11, 12],
+          [11, 13],
+          [13, 15],
+          [12, 14],
+          [14, 16],
+        ];
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 2;
+        connectPairs.forEach(([i1, i2]) => {
+          const kp1 = keypoints[i1];
+          const kp2 = keypoints[i2];
+          if (kp1.score > 0.5 && kp2.score > 0.5) {
+            ctx.beginPath();
+            ctx.moveTo(kp1.x, kp1.y);
+            ctx.lineTo(kp2.x, kp2.y);
+            ctx.stroke();
+          }
+        });
+      }
+
+      async function initBodyDetector() {
+        bodyLoader.style.display = "block";
+        const model = poseDetection.SupportedModels.MoveNet;
+        bodyDetector = await poseDetection.createDetector(model, {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        });
+        bodyLoader.style.display = "none";
+      }
+
+      async function detectBodyPose() {
+        if (!bodyDetector) return;
+        const poses = await bodyDetector.estimatePoses(bodyVideo);
+        bodyCtx.clearRect(0, 0, bodyCanvas.width, bodyCanvas.height);
+
+        if (poses && poses.length > 0) {
+          const keypoints = poses[0].keypoints;
+          keypoints.forEach((kp) => {
+            if (kp.score > 0.5) {
+              bodyCtx.beginPath();
+              bodyCtx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+              bodyCtx.fillStyle = "red";
+              bodyCtx.fill();
+            }
+          });
+          drawSkeleton(bodyCtx, keypoints);
+          bodyLandmarksSpan.textContent = "Landmarks: " + keypoints.filter((p) => p.score > 0.5).length;
+
+          const task = bodyTasks[currentBodyTaskIndex];
+          let wristIndex, elbowIndex, shoulderIndex;
+          if (task.type === "right_arm") {
+            wristIndex = 10;
+            elbowIndex = 8;
+            shoulderIndex = 6;
+          } else {
+            wristIndex = 9;
+            elbowIndex = 7;
+            shoulderIndex = 5;
+          }
+          const wrist = keypoints[wristIndex];
+          const elbow = keypoints[elbowIndex];
+          const shoulder = keypoints[shoulderIndex];
+
+          if (
+            wrist.score > 0.5 && elbow.score > 0.5 && shoulder.score > 0.5 &&
+            !bodyTaskCompleted
+          ) {
+            const angle = calculateAngle(shoulder, elbow, wrist);
+            if (angle > 150 && wrist.y < shoulder.y) {
+              const msgEN = `Task Completed: ${task.type === "right_arm" ? "Right" : "Left"} arm raised! (Angle: ${angle.toFixed(0)}°)`;
+              const msgTR = `Görev Başarılı: ${task.type === "right_arm" ? "Sağ" : "Sol"} kol kaldırıldı! (Açı: ${angle.toFixed(0)}°)`;
+              bodyTaskEl.textContent = currentLang === "EN" ? msgEN : msgTR;
+              bodyTaskEl.style.color = "green";
+              bodyTaskCompleted = true;
+              confetti({ particleCount: 100, spread: 60, origin: { y: 0.5 } });
+              announceTask(msgEN, msgTR);
+              setTimeout(nextBodyTask, 3000);
+            }
+          }
+        }
+
+        bodyFrameCount++;
+        const now = performance.now();
+        if (now - bodyLastTime >= 1000) {
+          bodyFpsSpan.textContent = "FPS: " + bodyFrameCount;
+          bodyFrameCount = 0;
+          bodyLastTime = now;
+        }
+        bodyDetectionFrame = requestAnimationFrame(detectBodyPose);
+      }
+
+      async function startBodyPoseDetection() {
+        playClickSound();
+        if (!bodyDetector) await initBodyDetector();
+        currentBodyTaskIndex = 0;
+        bodyTaskCompleted = false;
+        bodyTaskEl.textContent = currentLang === "EN"
+          ? bodyTasks[currentBodyTaskIndex].messageEN
+          : bodyTasks[currentBodyTaskIndex].messageTR;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          bodyVideo.srcObject = stream;
+          await bodyVideo.play();
+          bodyCanvas.width = bodyVideo.videoWidth;
+          bodyCanvas.height = bodyVideo.videoHeight;
+          detectBodyPose();
+        } catch (err) {
+          console.error("Body detection camera error:", err);
+        }
+      }
+
+      function stopBodyPoseDetection() {
+        playClickSound();
+        cancelAnimationFrame(bodyDetectionFrame);
+        if (bodyVideo.srcObject) {
+          bodyVideo.srcObject.getTracks().forEach((t) => t.stop());
+          bodyVideo.srcObject = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (E) HAND GESTURE DETECTION (Storing globalHandLandmarks)
+      ---------------------------------------------------------------- */
+      let mpHands = null;
+      let handCamera = null;
+      let handFrameCount = 0;
+      let handLastTime = performance.now();
+      let handTaskCompleted = false;
+      const handVideo = document.getElementById("handVideo");
+      const handCanvas = document.getElementById("handCanvas");
+      const handCtx = handCanvas.getContext("2d");
+      const handLoader = document.getElementById("handLoader");
+      const handFpsSpan = document.getElementById("handFps");
+      const handLandmarksSpan = document.getElementById("handLandmarks");
+      const handTaskEl = document.getElementById("handTask");
+
+      // YENİ EKLENEN: Küresel el landmark değişkeni
+      let globalHandLandmarks = null;
+
+      const handTasks = [
+        {
+          messageEN: "Task: Wave your hand!",
+          messageTR: "Görev: Elinizi sallayın!"
+        }
+      ];
+      let currentHandTaskIndex = 0;
+
+      function nextHandTaskHand() {
+        currentHandTaskIndex = (currentHandTaskIndex + 1) % handTasks.length;
+        handTaskCompleted = false;
+        handTaskEl.textContent = currentLang === "EN"
+          ? handTasks[currentHandTaskIndex].messageEN
+          : handTasks[currentHandTaskIndex].messageTR;
+        handTaskEl.style.color = "var(--primary-color)";
+      }
+
+      function initHandDetector() {
+        handLoader.style.display = "block";
+        mpHands = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+        });
+        mpHands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 0,
+          minDetectionConfidence: 0.3,
+          minTrackingConfidence: 0.3,
+        });
+        mpHands.onResults(onHandResults);
+        handLoader.style.display = "none";
+      }
+
+      function onHandResults(results) {
+        handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+          const landmarks = results.multiHandLandmarks[0];
+          globalHandLandmarks = landmarks; // atama
+
+          // Draw landmarks
+          landmarks.forEach((pt) => {
+            handCtx.beginPath();
+            handCtx.arc(pt.x * handCanvas.width, pt.y * handCanvas.height, 4, 0, 2 * Math.PI);
+            handCtx.fillStyle = "green";
+            handCtx.fill();
+          });
+          // Draw connections
+          for (let c of mpHands.HAND_CONNECTIONS) {
+            const [start, end] = c;
+            const pt1 = landmarks[start];
+            const pt2 = landmarks[end];
+            handCtx.beginPath();
+            handCtx.moveTo(pt1.x * handCanvas.width, pt1.y * handCanvas.height);
+            handCtx.lineTo(pt2.x * handCanvas.width, pt2.y * handCanvas.height);
+            handCtx.strokeStyle = "blue";
+            handCtx.lineWidth = 2;
+            handCtx.stroke();
+          }
+          handLandmarksSpan.textContent = "Landmarks: " + landmarks.length;
+
+          // Basit dalga tespiti
+          if (!handTaskCompleted) {
+            handTaskCompleted = true;
+            const msgEN = "Task Completed: Hand waved!";
+            const msgTR = "Görev Başarılı: El sallama algılandı!";
+            handTaskEl.textContent = currentLang === "EN" ? msgEN : msgTR;
+            handTaskEl.style.color = "green";
+            confetti({ particleCount: 100, spread: 60, origin: { y: 0.5 } });
+            announceTask(msgEN, msgTR);
+            setTimeout(nextHandTaskHand, 3000);
+          }
+        } else {
+          globalHandLandmarks = null;
+          handLandmarksSpan.textContent = "Landmarks: 0";
+        }
+
+        handFrameCount++;
+        const now = performance.now();
+        if (now - handLastTime >= 1000) {
+          handFpsSpan.textContent = "FPS: " + handFrameCount;
+          handFrameCount = 0;
+          handLastTime = now;
+        }
+      }
+
+      async function startHandPoseDetection() {
+        playClickSound();
+        if (!mpHands) initHandDetector();
+        currentHandTaskIndex = 0;
+        handTaskCompleted = false;
+        handTaskEl.textContent = currentLang === "EN"
+          ? handTasks[currentHandTaskIndex].messageEN
+          : handTasks[currentHandTaskIndex].messageTR;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          handVideo.srcObject = stream;
+          await handVideo.play();
+          handCanvas.width = handVideo.videoWidth;
+          handCanvas.height = handVideo.videoHeight;
+          handCamera = new Camera(handVideo, {
+            onFrame: async () => {
+              await mpHands.send({ image: handVideo });
+            },
+            width: handVideo.videoWidth,
+            height: handVideo.videoHeight,
+          });
+          handCamera.start();
+        } catch (err) {
+          console.error("Hand detection camera error:", err);
+        }
+      }
+
+      function stopHandPoseDetection() {
+        playClickSound();
+        if (handCamera) {
+          handCamera.stop();
+          handCamera = null;
+        }
+        if (handVideo.srcObject) {
+          handVideo.srcObject.getTracks().forEach((t) => t.stop());
+          handVideo.srcObject = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (F) EMOTION ANALYSIS (face-api.js)
+      ---------------------------------------------------------------- */
+      let emotionModelsLoaded = false;
+      let emotionStream = null;
+      let emotionDetectionFrame;
+      let emotionFrameCount = 0;
+      let emotionLastTime = performance.now();
+      const emotionVideo = document.getElementById("emotionVideo");
+      const emotionCanvas = document.getElementById("emotionCanvas");
+      const emotionCtx = emotionCanvas.getContext("2d");
+      const emotionLoader = document.getElementById("emotionLoader");
+      const emotionFpsSpan = document.getElementById("emotionFps");
+      const emotionResultSpan = document.getElementById("emotionResult");
+
+      let emotionChart;
+
+      async function loadEmotionModels() {
+        try {
+          await faceapi.nets.tinyFaceDetector.loadFromUri("https://justadudewhohacks.github.io/face-api.js/models");
+          await faceapi.nets.faceExpressionNet.loadFromUri("https://justadudewhohacks.github.io/face-api.js/models");
+          await faceapi.nets.faceLandmark68Net.loadFromUri("https://justadudewhohacks.github.io/face-api.js/models");
+          emotionModelsLoaded = true;
+          initEmotionChart();
+        } catch (error) {
+          console.error("Error loading emotion models:", error);
+        }
+      }
+
+      function initEmotionChart() {
+        const ctx = document.getElementById("emotionChart").getContext("2d");
+        emotionChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"],
+            datasets: [
+              {
+                label: currentLang === "EN" ? "Emotion (%)" : "Duygu (%)",
+                data: [0, 0, 0, 0, 0, 0, 0],
+                backgroundColor: [
+                  "rgba(255, 99, 132, 0.5)",
+                  "rgba(255, 159, 64, 0.5)",
+                  "rgba(255, 205, 86, 0.5)",
+                  "rgba(75, 192, 192, 0.5)",
+                  "rgba(54, 162, 235, 0.5)",
+                  "rgba(153, 102, 255, 0.5)",
+                  "rgba(201, 203, 207, 0.5)",
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            animation: { duration: 0 },
+            scales: { y: { beginAtZero: true, max: 100 } },
+          },
+        });
+      }
+
+      async function analyzeEmotion() {
+        const detection = await faceapi
+          .detectSingleFace(emotionVideo, new faceapi.TinyFaceDetectorOptions())
+          .withFaceExpressions();
+        emotionCtx.drawImage(emotionVideo, 0, 0, emotionCanvas.width, emotionCanvas.height);
+
+        // EK: Yüzü belirginleştirmek için bounding box çizimi (varsa)
+        if (detection && detection.box) {
+          const { x, y, width, height } = detection.box;
+          emotionCtx.strokeStyle = "lime";
+          emotionCtx.lineWidth = 2;
+          emotionCtx.strokeRect(x, y, width, height);
+        }
+
+        if (detection && detection.expressions) {
+          const expressions = detection.expressions;
+          const maxEmotion = Object.keys(expressions).reduce((a, b) =>
+            expressions[a] > expressions[b] ? a : b
+          );
+          const percent = (expressions[maxEmotion] * 100).toFixed(0);
+          const labelEN = `Emotion: ${maxEmotion} (${percent}%)`;
+          const labelTR = `Duygu: ${maxEmotion} (${percent}%)`;
+          emotionCtx.fillStyle = "rgba(0,0,0,0.4)";
+          emotionCtx.fillRect(0, 0, emotionCanvas.width, 40);
+          emotionCtx.fillStyle = "white";
+          emotionCtx.font = "20px Arial";
+          emotionCtx.fillText(currentLang === "EN" ? labelEN : labelTR, 10, 28);
+          emotionResultSpan.textContent = currentLang === "EN" ? labelEN : labelTR;
+
+          // Update chart data
+          emotionChart.data.datasets[0].data = [
+            (expressions.angry * 100).toFixed(1),
+            (expressions.disgust * 100).toFixed(1),
+            (expressions.fear * 100).toFixed(1),
+            (expressions.happy * 100).toFixed(1),
+            (expressions.sad * 100).toFixed(1),
+            (expressions.surprise * 100).toFixed(1),
+            (expressions.neutral * 100).toFixed(1),
+          ];
+          emotionChart.update();
+
+          if (maxEmotion === "happy" && expressions.happy > 0.8) {
+            confetti({ particleCount: 120, spread: 70, origin: { y: 0.5 } });
+          }
+        }
+
+        emotionFrameCount++;
+        const now = performance.now();
+        if (now - emotionLastTime >= 1000) {
+          emotionFpsSpan.textContent = "FPS: " + emotionFrameCount;
+          emotionFrameCount = 0;
+          emotionLastTime = now;
+        }
+
+        emotionDetectionFrame = requestAnimationFrame(analyzeEmotion);
+      }
+
+      async function startEmotionAnalysis() {
+        playClickSound();
+        emotionLoader.style.display = "block";
+        if (!emotionModelsLoaded) {
+          await loadEmotionModels();
+        }
+        try {
+          emotionStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          emotionVideo.srcObject = emotionStream;
+          await emotionVideo.play();
+          emotionCanvas.width = emotionVideo.videoWidth;
+          emotionCanvas.height = emotionVideo.videoHeight;
+          emotionLoader.style.display = "none";
+          analyzeEmotion();
+        } catch (err) {
+          console.error("Emotion analysis camera error:", err);
+        }
+      }
+
+      function stopEmotionAnalysis() {
+        playClickSound();
+        cancelAnimationFrame(emotionDetectionFrame);
+        if (emotionStream) {
+          emotionStream.getTracks().forEach((t) => t.stop());
+          emotionStream = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (F) FACE RECOGNITION & SPEECH ESTIMATION
+      ---------------------------------------------------------------- */
+      let faceMesh = null;
+      let faceCamera = null;
+      let faceFrameCount = 0;
+      let faceLastTime = performance.now();
+      const faceLoader = document.getElementById("faceLoader");
+      const faceVideo = document.getElementById("faceVideo");
+      const faceCanvas = document.getElementById("faceCanvas");
+      const faceCtx = faceCanvas.getContext("2d");
+      const faceFpsSpan = document.getElementById("faceFps");
+
+      async function initFaceMesh() {
+        faceLoader.style.display = "block";
+        faceMesh = new FaceMesh({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+        faceMesh.onResults(onFaceResults);
+        faceLoader.style.display = "none";
+      }
+
+      function onFaceResults(results) {
+        faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+        if (results.multiFaceLandmarks) {
+          const landmarks = results.multiFaceLandmarks[0];
+          landmarks.forEach((pt) => {
+            faceCtx.beginPath();
+            faceCtx.arc(pt.x * faceCanvas.width, pt.y * faceCanvas.height, 2, 0, 2 * Math.PI);
+            faceCtx.fillStyle = "orange";
+            faceCtx.fill();
+          });
+        }
+        faceFrameCount++;
+        const now = performance.now();
+        if (now - faceLastTime >= 1000) {
+          faceFpsSpan.textContent = "FPS: " + faceFrameCount;
+          faceFrameCount = 0;
+          faceLastTime = now;
+        }
+      }
+
+      async function startFaceDetection() {
+        playClickSound();
+        if (!faceMesh) await initFaceMesh();
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          faceVideo.srcObject = stream;
+          await faceVideo.play();
+          faceCanvas.width = faceVideo.videoWidth;
+          faceCanvas.height = faceVideo.videoHeight;
+          faceCamera = new Camera(faceVideo, {
+            onFrame: async () => {
+              await faceMesh.send({ image: faceVideo });
+            },
+            width: faceVideo.videoWidth,
+            height: faceVideo.videoHeight,
+          });
+          faceCamera.start();
+        } catch (err) {
+          console.error("Face detection camera error:", err);
+        }
+      }
+
+      function stopFaceDetection() {
+        playClickSound();
+        if (faceCamera) {
+          faceCamera.stop();
+          faceCamera = null;
+        }
+        if (faceVideo.srcObject) {
+          faceVideo.srcObject.getTracks().forEach((t) => t.stop());
+          faceVideo.srcObject = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (G) OBJECT DETECTION (COCO-SSD)
+      ---------------------------------------------------------------- */
+      let objectModel = null;
+      let objectDetectionFrame;
+      let objectFrameCount = 0;
+      let objectLastTime = performance.now();
+      let objectStream = null;
+      const objectVideo = document.getElementById("objectVideo");
+      const objectCanvas = document.getElementById("objectCanvas");
+      const objectCtx = objectCanvas.getContext("2d");
+      const objectLoader = document.getElementById("objectLoader");
+      const objectFpsSpan = document.getElementById("objectFps");
+      const objectDetectionsSpan = document.getElementById("objectDetections");
+
+      async function loadObjectModel() {
+        objectLoader.style.display = "block";
+        objectModel = await cocoSsd.load();
+        objectLoader.style.display = "none";
+      }
+
+      async function detectObjects() {
+        objectCtx.drawImage(objectVideo, 0, 0, objectCanvas.width, objectCanvas.height);
+        const predictions = await objectModel.detect(objectCanvas);
+        objectCtx.drawImage(objectVideo, 0, 0, objectCanvas.width, objectCanvas.height);
+        let detectionsCount = 0;
+        predictions.forEach((prediction) => {
+          detectionsCount++;
+          const [x, y, width, height] = prediction.bbox;
+          objectCtx.beginPath();
+          objectCtx.rect(x, y, width, height);
+          objectCtx.lineWidth = 2;
+          objectCtx.strokeStyle = "blue";
+          objectCtx.fillStyle = "blue";
+          objectCtx.stroke();
+          objectCtx.fillStyle = "white";
+          objectCtx.font = "16px Arial";
+          objectCtx.fillText(
+            `${prediction.class} (${(prediction.score * 100).toFixed(1)}%)`,
+            x + 5,
+            y > 20 ? y - 5 : y + 15
+          );
+        });
+        objectDetectionsSpan.textContent = "Detections: " + detectionsCount;
+        objectFrameCount++;
+        const now = performance.now();
+        if (now - objectLastTime >= 1000) {
+          objectFpsSpan.textContent = "FPS: " + objectFrameCount;
+          objectFrameCount = 0;
+          objectLastTime = now;
+        }
+        objectDetectionFrame = requestAnimationFrame(detectObjects);
+      }
+
+      async function startObjectDetection() {
+        playClickSound();
+        if (!objectModel) await loadObjectModel();
+        try {
+          objectStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          objectVideo.srcObject = objectStream;
+          await objectVideo.play();
+          objectCanvas.width = objectVideo.videoWidth;
+          objectCanvas.height = objectVideo.videoHeight;
+          detectObjects();
+        } catch (err) {
+          console.error("Object detection camera error:", err);
+        }
+      }
+
+      function stopObjectDetection() {
+        playClickSound();
+        cancelAnimationFrame(objectDetectionFrame);
+        if (objectStream) {
+          objectStream.getTracks().forEach((t) => t.stop());
+          objectStream = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (H) MOTION DETECTION (Background Subtraction)
+      ---------------------------------------------------------------- */
+      let motionDetectionFrame;
+      let motionFrameCount = 0;
+      let motionLastTime = performance.now();
+      let motionStream = null;
+      let backgroundData = null;
+      const motionVideo = document.getElementById("motionVideo");
+      const motionCanvas = document.getElementById("motionCanvas");
+      const motionCtx = motionCanvas.getContext("2d");
+      const motionLoader = document.getElementById("motionLoader");
+      const motionFpsSpan = document.getElementById("motionFps");
+      const motionStatusSpan = document.getElementById("motionStatus");
+
+      async function detectMotion() {
+        motionCtx.drawImage(motionVideo, 0, 0, motionCanvas.width, motionCanvas.height);
+        const frameData = motionCtx.getImageData(0, 0, motionCanvas.width, motionCanvas.height);
+        let motionPixels = 0;
+        if (backgroundData) {
+          for (let i = 0; i < frameData.data.length; i += 4) {
+            const diff =
+              Math.abs(frameData.data[i] - backgroundData.data[i]) +
+              Math.abs(frameData.data[i + 1] - backgroundData.data[i + 1]) +
+              Math.abs(frameData.data[i + 2] - backgroundData.data[i + 2]);
+            if (diff > 60) {
+              motionPixels++;
+              // highlight changed pixels in red
+              frameData.data[i] = 255;
+              frameData.data[i + 1] = 0;
+              frameData.data[i + 2] = 0;
+            }
+          }
+        } else {
+          backgroundData = frameData;
+        }
+        motionCtx.putImageData(frameData, 0, 0);
+        motionStatusSpan.textContent = motionPixels > 1000
+          ? "Motion: Detected"
+          : "Motion: None";
+
+        motionFrameCount++;
+        const now = performance.now();
+        if (now - motionLastTime >= 1000) {
+          motionFpsSpan.textContent = "FPS: " + motionFrameCount;
+          motionFrameCount = 0;
+          motionLastTime = now;
+        }
+        motionDetectionFrame = requestAnimationFrame(detectMotion);
+      }
+
+      async function startMotionDetection() {
+        playClickSound();
+        motionLoader.style.display = "block";
+        backgroundData = null;
+        try {
+          motionStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          motionVideo.srcObject = motionStream;
+          await motionVideo.play();
+          motionCanvas.width = motionVideo.videoWidth;
+          motionCanvas.height = motionVideo.videoHeight;
+          motionLoader.style.display = "none";
+          detectMotion();
+        } catch (err) {
+          console.error("Motion detection camera error:", err);
+        }
+      }
+
+      function stopMotionDetection() {
+        playClickSound();
+        cancelAnimationFrame(motionDetectionFrame);
+        if (motionStream) {
+          motionStream.getTracks().forEach((t) => t.stop());
+          motionStream = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (I) FUN ICON OVERLAY (Optimized)
+      ---------------------------------------------------------------- */
+      let iconOverlayStream = null;
+      let iconOverlayAnimationFrame, iconOverlayInterval, iconOverlayLevelInterval;
+      let iconOverlayLevel = 1;
+      let currentIcon = null, currentIconX = 0, currentIconY = 0;
+      const iconOverlayVideo = document.getElementById("iconOverlayVideo");
+      const iconOverlayCanvas = document.getElementById("iconOverlayCanvas");
+      const iconOverlayCtx = iconOverlayCanvas.getContext("2d");
+      const iconOverlayLoader = document.getElementById("iconOverlayLoader");
+      const iconOverlayFpsSpan = document.getElementById("iconOverlayFps");
+
+      // Fun icon URLs
+      const funIconURLs = [
+        "https://via.placeholder.com/50?text=😊",
+        "https://via.placeholder.com/50?text=⭐",
+        "https://via.placeholder.com/50?text=❤️",
+        "https://via.placeholder.com/50?text=😂",
+        "https://via.placeholder.com/50?text=🎈"
+      ];
+      const funIconImages = [];
+      funIconURLs.forEach(url => {
+        const img = new Image();
+        img.src = url;
+        funIconImages.push(img);
+      });
+
+      function updateIconOverlay() {
+        currentIcon = funIconImages[Math.floor(Math.random() * funIconImages.length)];
+        currentIconX = Math.random() * (iconOverlayCanvas.width - 50);
+        currentIconY = Math.random() * (iconOverlayCanvas.height - 50);
+      }
+
+      function drawIconOverlay() {
+        iconOverlayCtx.clearRect(0, 0, iconOverlayCanvas.width, iconOverlayCanvas.height);
+        iconOverlayCtx.drawImage(iconOverlayVideo, 0, 0, iconOverlayCanvas.width, iconOverlayCanvas.height);
+        if (currentIcon) {
+          let time = Date.now();
+          let scale = 1 + 0.2 * Math.sin(time / 200);
+          let size = 50 * scale;
+          iconOverlayCtx.drawImage(currentIcon, currentIconX, currentIconY, size, size);
+        }
+      }
+
+      function animateIconOverlay() {
+        drawIconOverlay();
+        iconOverlayAnimationFrame = requestAnimationFrame(animateIconOverlay);
+      }
+
+      function startIconOverlayLevelSystem() {
+        iconOverlayLevelInterval = setInterval(() => {
+          iconOverlayLevel++;
+          document.getElementById("iconOverlayLevel").textContent = "Level: " + iconOverlayLevel;
+          // Shorten icon update interval as level increases (improved: smoother transition)
+          clearInterval(iconOverlayInterval);
+          let newInterval = Math.max(500, 1500 - iconOverlayLevel * 50);
+          iconOverlayInterval = setInterval(updateIconOverlay, newInterval);
+        }, 10000);
+      }
+
+      async function startIconOverlay() {
+        playClickSound();
+        iconOverlayLoader.style.display = "block";
+        try {
+          iconOverlayStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          iconOverlayVideo.srcObject = iconOverlayStream;
+          await iconOverlayVideo.play();
+          iconOverlayCanvas.width = iconOverlayVideo.videoWidth;
+          iconOverlayCanvas.height = iconOverlayVideo.videoHeight;
+          iconOverlayLoader.style.display = "none";
+          iconOverlayLevel = 1;
+          document.getElementById("iconOverlayLevel").textContent = "Level: " + iconOverlayLevel;
+          updateIconOverlay();
+          iconOverlayInterval = setInterval(updateIconOverlay, 2000);
+          startIconOverlayLevelSystem();
+          animateIconOverlay();
+        } catch (err) {
+          console.error("Icon Overlay camera error:", err);
+        }
+      }
+
+      function stopIconOverlay() {
+        playClickSound();
+        cancelAnimationFrame(iconOverlayAnimationFrame);
+        clearInterval(iconOverlayInterval);
+        clearInterval(iconOverlayLevelInterval);
+        if (iconOverlayStream) {
+          iconOverlayStream.getTracks().forEach(t => t.stop());
+          iconOverlayStream = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (J) EMOJI PARTY (Optimized with Face & Hands detection)
+      ---------------------------------------------------------------- */
+      let emojiPartyStream = null;
+      let emojiPartyAnimationFrame = null;
+      let emojiPartyFaceMesh = null;
+      let emojiPartyHands = null;
+      let emojiPartyCamera = null;
+      let globalFaceLandmarksForParty = null;
+      let emojiPartyFrameCount = 0;
+      let emojiPartyLastTime = performance.now();
+
+      const emojiPartyLoader = document.getElementById("emojiPartyLoader");
+      const emojiPartyVideo = document.getElementById("emojiPartyVideo");
+      const emojiPartyCanvas = document.getElementById("emojiPartyCanvas");
+      const emojiPartyCtx = emojiPartyCanvas.getContext("2d");
+      const emojiPartyFpsSpan = document.getElementById("emojiPartyFps");
+      const emojiPartyCountSpan = document.getElementById("emojiPartyCount");
+
+      // Task list for Emoji Party
+      const emojiPartyTasks = [
+        {
+          descriptionEN: "Turn your head right",
+          descriptionTR: "Başını sağa çevir",
+          emoji: "😎",
+          checkCondition: function() {
+            if (!globalFaceLandmarksForParty) return false;
+            let nose = globalFaceLandmarksForParty[1];
+            if (!nose) return false;
+            let sumX = 0;
+            globalFaceLandmarksForParty.forEach(pt => sumX += pt.x);
+            let centerX = sumX / globalFaceLandmarksForParty.length;
+            return nose.x > (centerX + 0.015);
+          }
+        },
+        {
+          descriptionEN: "Blink your right eye",
+          descriptionTR: "Sağ gözünü kırp",
+          emoji: "😉",
+          checkCondition: function() {
+            if (!globalFaceLandmarksForParty) return false;
+            let leftPoint = globalFaceLandmarksForParty[33];
+            let rightPoint = globalFaceLandmarksForParty[133];
+            let topPoint = globalFaceLandmarksForParty[159];
+            let bottomPoint = globalFaceLandmarksForParty[145];
+            if (!leftPoint || !rightPoint || !topPoint || !bottomPoint) return false;
+            let horizontalDist = rightPoint.x - leftPoint.x;
+            let verticalDist = bottomPoint.y - topPoint.y;
+            let ear = verticalDist / horizontalDist;
+            return ear < 0.18;
+          }
+        },
+        {
+          descriptionEN: "Place your right hand on your head",
+          descriptionTR: "Sağ elini başına koy",
+          emoji: "🎩",
+          checkCondition: function() {
+            if (!globalFaceLandmarksForParty || !globalHandLandmarks) return false;
+            let minY = 1;
+            globalFaceLandmarksForParty.forEach(pt => {
+              if (pt.y < minY) minY = pt.y;
+            });
+            let handPalm = globalHandLandmarks[0];
+            if (!handPalm) return false;
+            return handPalm.y < (minY + 0.05);
+          }
+        }
+      ];
+      let currentEmojiTaskIndex = 0;
+      let emojiPartyTaskCompleted = false;
+      let emojiCount = 0;
+
+      async function initEmojiPartyFaceMesh() {
+        emojiPartyFaceMesh = new FaceMesh({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+        emojiPartyFaceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+        emojiPartyFaceMesh.onResults((results) => {
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            globalFaceLandmarksForParty = results.multiFaceLandmarks[0];
+          } else {
+            globalFaceLandmarksForParty = null;
+          }
+        });
+      }
+
+      async function initEmojiPartyHands() {
+        emojiPartyHands = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+        });
+        emojiPartyHands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 0,
+          minDetectionConfidence: 0.3,
+          minTrackingConfidence: 0.3,
+        });
+        emojiPartyHands.onResults((results) => {
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            globalHandLandmarks = results.multiHandLandmarks[0];
+          } else {
+            globalHandLandmarks = null;
+          }
+        });
+      }
+
+      function drawEmojiPartyFrame() {
+        emojiPartyCtx.clearRect(0, 0, emojiPartyCanvas.width, emojiPartyCanvas.height);
+        emojiPartyCtx.drawImage(emojiPartyVideo, 0, 0, emojiPartyCanvas.width, emojiPartyCanvas.height);
+
+        if (globalFaceLandmarksForParty) {
+          globalFaceLandmarksForParty.forEach((pt) => {
+            emojiPartyCtx.beginPath();
+            emojiPartyCtx.arc(pt.x * emojiPartyCanvas.width, pt.y * emojiPartyCanvas.height, 2, 0, 2 * Math.PI);
+            emojiPartyCtx.fillStyle = "red";
+            emojiPartyCtx.fill();
+          });
+        }
+        if (globalHandLandmarks) {
+          globalHandLandmarks.forEach((pt) => {
+            emojiPartyCtx.beginPath();
+            emojiPartyCtx.arc(pt.x * emojiPartyCanvas.width, pt.y * emojiPartyCanvas.height, 4, 0, 2 * Math.PI);
+            emojiPartyCtx.fillStyle = "green";
+            emojiPartyCtx.fill();
+          });
+        }
+
+        let currentTask = emojiPartyTasks[currentEmojiTaskIndex];
+        let taskText = currentLang === "EN" ? currentTask.descriptionEN : currentTask.descriptionTR;
+        emojiPartyCtx.fillStyle = "rgba(0,0,0,0.4)";
+        emojiPartyCtx.fillRect(0, 0, emojiPartyCanvas.width, emojiPartyCanvas.height < 40 ? emojiPartyCanvas.height : 40);
+        emojiPartyCtx.fillStyle = "white";
+        emojiPartyCtx.font = "20px Arial";
+        emojiPartyCtx.fillText(taskText, 10, 28);
+
+        if (!emojiPartyTaskCompleted && currentTask.checkCondition()) {
+          emojiPartyTaskCompleted = true;
+          emojiCount++;
+          emojiPartyCountSpan.textContent = "Emojis: " + emojiCount;
+          let centerX = (emojiPartyCanvas.width / 2) - 40;
+          let centerY = (emojiPartyCanvas.height / 2) + 30;
+          // --- EMOJI BOYUTU ARTIRILDI: 80px ile gösterilecek ---
+          emojiPartyCtx.font = "80px Arial";
+          emojiPartyCtx.fillText(currentTask.emoji, centerX, centerY);
+          confetti({ particleCount: 100, spread: 60, origin: { y: 0.5 } });
+          setTimeout(() => {
+            currentEmojiTaskIndex = (currentEmojiTaskIndex + 1) % emojiPartyTasks.length;
+            emojiPartyTaskCompleted = false;
+          }, 2000);
+        }
+      }
+
+      function emojiPartyLoop() {
+        drawEmojiPartyFrame();
+        emojiPartyFrameCount++;
+        let now = performance.now();
+        if (now - emojiPartyLastTime >= 1000) {
+          emojiPartyFpsSpan.textContent = "FPS: " + emojiPartyFrameCount;
+          emojiPartyFrameCount = 0;
+          emojiPartyLastTime = now;
+        }
+        emojiPartyAnimationFrame = requestAnimationFrame(emojiPartyLoop);
+      }
+
+      async function startEmojiParty() {
+        playClickSound();
+        emojiPartyLoader.style.display = "block";
+        if (!emojiPartyFaceMesh) await initEmojiPartyFaceMesh();
+        if (!emojiPartyHands) await initEmojiPartyHands();
+        try {
+          emojiPartyStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          emojiPartyVideo.srcObject = emojiPartyStream;
+          await emojiPartyVideo.play();
+          emojiPartyCanvas.width = emojiPartyVideo.videoWidth;
+          emojiPartyCanvas.height = emojiPartyVideo.videoHeight;
+          emojiPartyLoader.style.display = "none";
+          currentEmojiTaskIndex = 0;
+          emojiPartyTaskCompleted = false;
+          emojiCount = 0;
+          emojiPartyCountSpan.textContent = "Emojis: " + emojiCount;
+          emojiPartyCamera = new Camera(emojiPartyVideo, {
+            onFrame: async () => {
+              await emojiPartyFaceMesh.send({ image: emojiPartyVideo });
+              await emojiPartyHands.send({ image: emojiPartyVideo });
+            },
+            width: emojiPartyVideo.videoWidth,
+            height: emojiPartyVideo.videoHeight,
+          });
+          emojiPartyCamera.start();
+          emojiPartyLoop();
+        } catch (err) {
+          console.error("Emoji Party camera error:", err);
+        }
+      }
+
+      function stopEmojiParty() {
+        playClickSound();
+        cancelAnimationFrame(emojiPartyAnimationFrame);
+        if (emojiPartyCamera) {
+          emojiPartyCamera.stop();
+          emojiPartyCamera = null;
+        }
+        if (emojiPartyStream) {
+          emojiPartyStream.getTracks().forEach(t => t.stop());
+          emojiPartyStream = null;
+        }
+      }
+
+      /* ----------------------------------------------------------------
+         (K) SOCIAL SHARING
+      ---------------------------------------------------------------- */
+      let shareModuleName = "";
+      function openShareModal(moduleName) {
+        playClickSound();
+        shareModuleName = moduleName;
+        const shareModal = new bootstrap.Modal(document.getElementById("shareModal"));
+        shareModal.show();
+      }
+
+      function encodeURL(str) {
+        return encodeURIComponent(str);
+      }
+
+      const shareMessage = `AI'Han Academy Rocks! I'm diving deep into AI and computer vision—come and experience it for yourself!`;
+      const shareURL = window.location.href;
+
+      window.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("shareTwitterBtn").onclick = () => {
+          const link = `https://twitter.com/intent/tweet?text=${encodeURL(shareMessage)}&url=${encodeURL(shareURL)}`;
+          window.open(link, "_blank");
+        };
+        document.getElementById("shareFacebookBtn").onclick = () => {
+          const link = `https://www.facebook.com/sharer.php?u=${encodeURL(shareURL)}&quote=${encodeURL(shareMessage)}`;
+          window.open(link, "_blank");
+        };
+        document.getElementById("shareInstaBtn").onclick = () => {
+          alert("Instagram web share isn't officially supported...");
+          window.open("https://www.instagram.com/", "_blank");
+        };
+        document.getElementById("shareLinkedinBtn").onclick = () => {
+          const link = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURL(shareURL)}&summary=${encodeURL(shareMessage)}`;
+          window.open(link, "_blank");
+        };
+
+        doIntroSequence();
+      });
+    </script>
+  </body>
+</html>
+
+
+
+
+
